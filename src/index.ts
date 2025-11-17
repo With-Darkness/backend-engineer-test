@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { blockRoutes } from './api/routes/block.routes';
 import { balanceRoutes } from './api/routes/balance.routes';
+import { rollbackRoutes } from './api/routes/rollback.routes';
 import { initializeDatabase } from './db/index';
 
 const fastify = Fastify({ logger: true });
@@ -21,6 +22,7 @@ try {
   // Register routes
   await fastify.register(blockRoutes);
   await fastify.register(balanceRoutes);
+  await fastify.register(rollbackRoutes);
   
   await fastify.listen({
     port: 3000,

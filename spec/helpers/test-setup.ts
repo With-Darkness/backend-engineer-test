@@ -148,6 +148,7 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { blockRoutes } from '../../src/api/routes/block.routes';
 import { balanceRoutes } from '../../src/api/routes/balance.routes';
+import { rollbackRoutes } from '../../src/api/routes/rollback.routes';
 import { initializeDatabase } from '../../src/db/index';
 
 export async function createTestServer(): Promise<FastifyInstance> {
@@ -163,6 +164,7 @@ export async function createTestServer(): Promise<FastifyInstance> {
   // Register routes
   await fastify.register(blockRoutes);
   await fastify.register(balanceRoutes);
+  await fastify.register(rollbackRoutes);
   
   // Start server on port 3000
   // Retry if port is in use (from previous test)
