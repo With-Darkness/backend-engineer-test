@@ -1,19 +1,13 @@
 import { createHash } from 'crypto';
 import { Pool } from 'pg';
-import type { Block } from '../types/block.types';
+import type { Block } from 'src/types/block.types';
 import {
   getCurrentHeight,
   getOutputValue,
   insertBlock,
   processBlockTransaction,
-} from '../db/queries';
-
-export class BlockValidationError extends Error {
-  constructor(message: string, public statusCode: number = 400) {
-    super(message);
-    this.name = 'BlockValidationError';
-  }
-}
+} from 'src/db/queries';
+import { BlockValidationError } from 'src/utils/errors';
 
 export async function validateBlock(pool: Pool, block: Block): Promise<void> {
   // Validation 1: Height must be exactly one unit higher than current height
@@ -22,8 +16,7 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
   
   if (block.height !== expectedHeight) {
     throw new BlockValidationError(
-      `Invalid block height. Expected ${expectedHeight}, got ${block.height}`,
-      400
+      `Invalid block height. Expected ${expectedHeight}, got ${block.height}`
     );
   }
 
@@ -51,8 +44,7 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
       // Check if this output is already being spent in this block (double-spend prevention)
       if (spentOutputs.has(outputKey)) {
         throw new BlockValidationError(
-          `Double-spend detected: output ${outputKey} is referenced multiple times in this block`,
-          400
+          `Double-spend detected: output ${outputKey} is referenced multiple times in this block`
         );
       }
       spentOutputs.add(outputKey);
@@ -62,8 +54,7 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
         const referencedOutputValue = await getOutputValue(pool, input.txId, input.index);
         if (referencedOutputValue === null) {
           throw new BlockValidationError(
-            `Input references non-existent output: ${input.txId}:${input.index}`,
-            400
+            `Input references non-existent output: ${input.txId}:${input.index}`
           );
         }
         transactionInputValue += referencedOutputValue;
@@ -71,8 +62,7 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
         // If output is already spent, convert to BlockValidationError
         if (error instanceof Error && error.message.includes('already been spent')) {
           throw new BlockValidationError(
-            `Input references already spent output: ${input.txId}:${input.index}`,
-            400
+            `Input references already spent output: ${input.txId}:${input.index}`
           );
         }
         // Re-throw BlockValidationError as-is
@@ -89,8 +79,7 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
     // Transactions with no inputs are allowed (they create new coins, like the first block)
     if (transaction.inputs.length > 0 && transactionInputValue !== transactionOutputValue) {
       throw new BlockValidationError(
-        `Input/output sum mismatch for transaction ${transaction.id}. Inputs: ${transactionInputValue}, Outputs: ${transactionOutputValue}`,
-        400
+        `Input/output sum mismatch for transaction ${transaction.id}. Inputs: ${transactionInputValue}, Outputs: ${transactionOutputValue}`
       );
     }
   }
@@ -108,8 +97,7 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
 
   if (block.id !== expectedBlockId) {
     throw new BlockValidationError(
-      `Invalid block ID. Expected ${expectedBlockId}, got ${block.id}`,
-      400
+      `Invalid block ID. Expected ${expectedBlockId}, got ${block.id}`
     );
   }
 }

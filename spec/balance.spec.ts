@@ -17,35 +17,10 @@
 import { expect, test, beforeEach, afterEach } from 'bun:test';
 import { setupTestDatabase, cleanupTestDatabase, closeTestDatabase, createTestServer } from './helpers/test-setup';
 import { testBlocks } from './helpers/block-helpers';
+import { sendRequest } from './helpers/test-utils';
 
 let fastify: any;
 let pool: any;
-
-// Helper function to send HTTP requests to the test server
-async function sendRequest(method: string, url: string, body?: any) {
-  const response = await fetch(`http://localhost:3000${url}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  
-  const responseBody = await response.text();
-  let jsonBody: any;
-  try {
-    jsonBody = JSON.parse(responseBody);
-  } catch {
-    jsonBody = responseBody;
-  }
-  
-  return {
-    statusCode: response.status,
-    status: response.status,
-    body: responseBody,
-    json: jsonBody
-  };
-}
 
 beforeEach(async () => {
   pool = await setupTestDatabase();

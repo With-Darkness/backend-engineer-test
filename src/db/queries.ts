@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import type { PoolClient } from 'pg';
-import type { Block, Transaction, Input, Output } from '../types/block.types';
+import type { Block, Transaction, Input, Output } from 'src/types/block.types';
 
 type DbClient = Pool | PoolClient;
 
