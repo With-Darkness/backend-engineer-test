@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import type { Block } from '../../src/types/block.types';
+import type { Block } from 'src/types/block.types';
 
 export function calculateBlockId(height: number, transactionIds: string[]): string {
   const sortedIds = transactionIds.sort().join('');

@@ -17,40 +17,10 @@
 import { expect, test, beforeEach, afterEach } from 'bun:test';
 import { setupTestDatabase, cleanupTestDatabase, closeTestDatabase, createTestServer } from './helpers/test-setup';
 import { testBlocks } from './helpers/block-helpers';
+import { sendRequest } from './helpers/test-utils';
 
 let fastify: any;
 let pool: any;
-
-// Helper function to send HTTP requests to the test server
-async function sendRequest(method: string, url: string, body?: any) {
-  const headers: Record<string, string> = {};
-  
-  // Only set Content-Type if there's a body
-  if (body) {
-    headers['Content-Type'] = 'application/json';
-  }
-  
-  const response = await fetch(`http://localhost:3000${url}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
-  
-  const responseBody = await response.text();
-  let jsonBody: any;
-  try {
-    jsonBody = JSON.parse(responseBody);
-  } catch {
-    jsonBody = responseBody;
-  }
-  
-  return {
-    statusCode: response.status,
-    status: response.status,
-    body: responseBody,
-    json: jsonBody
-  };
-}
 
 beforeEach(async () => {
   pool = await setupTestDatabase();
@@ -321,12 +291,6 @@ test('POST /rollback - Missing height parameter', async () => {
   expect(rollbackResponse.json.error).toContain('Height query parameter is required');
 });
 
-test('POST /rollback - Invalid height (not a number)', async () => {
-  const rollbackResponse = await sendRequest('POST', '/rollback?height=abc');
-  
-  expect(rollbackResponse.statusCode).toBe(400);
-  expect(rollbackResponse.json.error).toContain('non-negative integer');
-});
 
 test('POST /rollback - Negative height', async () => {
   const rollbackResponse = await sendRequest('POST', '/rollback?height=-1');

@@ -1,10 +1,14 @@
 import Fastify from 'fastify';
-import { blockRoutes } from './api/routes/block.routes';
-import { balanceRoutes } from './api/routes/balance.routes';
-import { rollbackRoutes } from './api/routes/rollback.routes';
-import { initializeDatabase } from './db/index';
+import { blockRoutes } from 'src/api/routes/block.routes';
+import { balanceRoutes } from 'src/api/routes/balance.routes';
+import { rollbackRoutes } from 'src/api/routes/rollback.routes';
+import { initializeDatabase } from 'src/db/index';
+import { errorHandler } from 'src/middleware/error-handler';
 
 const fastify = Fastify({ logger: true });
+
+// Register error handler
+fastify.setErrorHandler(errorHandler);
 
 fastify.get('/', async (request, reply) => {
   return { hello: 'world' };

@@ -1,12 +1,6 @@
 import { Pool } from 'pg';
-import { getCurrentHeight, deleteBlocksAboveHeight, resetSpentOutputs, recalculateAllBalances } from '../db/queries';
-
-export class RollbackError extends Error {
-  constructor(message: string, public statusCode: number = 400) {
-    super(message);
-    this.name = 'RollbackError';
-  }
-}
+import { getCurrentHeight, deleteBlocksAboveHeight, resetSpentOutputs, recalculateAllBalances } from 'src/db/queries';
+import { RollbackError } from 'src/utils/errors';
 
 /**
  * Rollback the blockchain indexer to a specific height
@@ -19,7 +13,7 @@ export class RollbackError extends Error {
 export async function rollbackToHeight(pool: Pool, targetHeight: number): Promise<void> {
   // Validate target height
   if (targetHeight < 0) {
-    throw new RollbackError('Target height must be non-negative', 400);
+    throw new RollbackError('Target height must be non-negative');
   }
 
   const currentHeight = await getCurrentHeight(pool);

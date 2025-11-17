@@ -1,27 +1,18 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { Block } from '../../types/block.types';
-import { getPool } from '../../db/index';
-import { processBlock, BlockValidationError } from '../../services/block.service';
+import type { Block } from 'src/types/block.types';
+import { getPool } from 'src/db/index';
+import { processBlock } from 'src/services/block.service';
+import { sendSuccess } from 'src/utils/response';
+import { asyncHandler } from 'src/middleware/error-handler';
 
-export async function createBlock(
-  request: FastifyRequest<{ Body: Block }>,
-  reply: FastifyReply
-) {
-  try {
+export const createBlock = asyncHandler(
+  async (request: FastifyRequest<{ Body: Block }>, reply: FastifyReply) => {
     const block = request.body;
     const pool = getPool();
 
     await processBlock(pool, block);
 
-    return reply.status(200).send({ message: 'Block processed successfully' });
-  } catch (error) {
-    if (error instanceof BlockValidationError) {
-      return reply.status(error.statusCode).send({ error: error.message });
-    }
-    
-    // Log unexpected errors
-    request.log.error(error);
-    return reply.status(500).send({ error: 'Internal server error' });
+    sendSuccess(reply, { message: 'Block processed successfully' });
   }
-}
+);
 

@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { calculateAddressBalance, getAddressBalance } from '../db/queries';
+import { calculateAddressBalance, getAddressBalance } from 'src/db/queries';
 
 /**
  * Get the balance for an address

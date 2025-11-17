@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { clearAllBlocks } from '../../src/db/queries';
+import { clearAllBlocks } from 'src/db/queries';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -146,16 +146,20 @@ export async function closeTestDatabase(): Promise<void> {
 
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { blockRoutes } from '../../src/api/routes/block.routes';
-import { balanceRoutes } from '../../src/api/routes/balance.routes';
-import { rollbackRoutes } from '../../src/api/routes/rollback.routes';
-import { initializeDatabase } from '../../src/db/index';
+import { blockRoutes } from 'src/api/routes/block.routes';
+import { balanceRoutes } from 'src/api/routes/balance.routes';
+import { rollbackRoutes } from 'src/api/routes/rollback.routes';
+import { initializeDatabase } from 'src/db/index';
+import { errorHandler } from 'src/middleware/error-handler';
 
 export async function createTestServer(): Promise<FastifyInstance> {
   // Initialize database first
   await initializeDatabase();
   
   const fastify = Fastify({ logger: false });
+  
+  // Register error handler
+  fastify.setErrorHandler(errorHandler);
   
   fastify.get('/', async (request, reply) => {
     return { hello: 'world' };
