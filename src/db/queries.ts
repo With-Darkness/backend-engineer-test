@@ -120,6 +120,10 @@ export async function updateAddressBalance(
   `, [address, delta]);
 }
 
+/**
+ * Get balance from cached address_balances table
+ * This is fast but relies on the balance being kept in sync
+ */
 export async function getAddressBalance(
   pool: DbClient,
   address: string
@@ -130,6 +134,29 @@ export async function getAddressBalance(
   `, [address]);
   
   return result.rows[0]?.balance ? Number(result.rows[0].balance) : 0;
+}
+
+/**
+ * Calculate balance directly from UTXOs (unspent outputs)
+ * This is the source of truth: balance = sum of all unspent outputs for an address
+ * 
+ * According to UTXO model:
+ * - Each output means an address received value
+ * - Each input means an output was spent
+ * - Balance = sum of all outputs received minus sum of all outputs spent
+ * - Which equals: sum of all unspent outputs (UTXOs)
+ */
+export async function calculateAddressBalance(
+  pool: DbClient,
+  address: string
+): Promise<number> {
+  const result = await pool.query(`
+    SELECT COALESCE(SUM(value), 0) as balance
+    FROM outputs
+    WHERE address = $1 AND spent = FALSE;
+  `, [address]);
+  
+  return Number(result.rows[0]?.balance || 0);
 }
 
 export async function processBlockTransaction(
