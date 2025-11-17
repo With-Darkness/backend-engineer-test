@@ -1,19 +1,19 @@
-import { createHash } from 'crypto';
-import { Pool } from 'pg';
-import type { Block } from 'src/types/block.types';
+import { createHash } from "crypto";
+import { Pool } from "pg";
+import type { Block } from "src/types/block.types";
 import {
   getCurrentHeight,
   getOutputValue,
   insertBlock,
   processBlockTransaction,
-} from 'src/db/queries';
-import { BlockValidationError } from 'src/utils/errors';
+} from "src/db/queries";
+import { BlockValidationError } from "src/utils/errors";
 
 export async function validateBlock(pool: Pool, block: Block): Promise<void> {
   // Validation 1: Height must be exactly one unit higher than current height
   const currentHeight = await getCurrentHeight(pool);
   const expectedHeight = currentHeight === null ? 1 : currentHeight + 1;
-  
+
   if (block.height !== expectedHeight) {
     throw new BlockValidationError(
       `Invalid block height. Expected ${expectedHeight}, got ${block.height}`
@@ -40,7 +40,7 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
     let transactionInputValue = 0;
     for (const input of transaction.inputs) {
       const outputKey = `${input.txId}:${input.index}`;
-      
+
       // Check if this output is already being spent in this block (double-spend prevention)
       if (spentOutputs.has(outputKey)) {
         throw new BlockValidationError(
@@ -51,7 +51,11 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
 
       // Look up the value of the output referenced by this input
       try {
-        const referencedOutputValue = await getOutputValue(pool, input.txId, input.index);
+        const referencedOutputValue = await getOutputValue(
+          pool,
+          input.txId,
+          input.index
+        );
         if (referencedOutputValue === null) {
           throw new BlockValidationError(
             `Input references non-existent output: ${input.txId}:${input.index}`
@@ -60,7 +64,10 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
         transactionInputValue += referencedOutputValue;
       } catch (error) {
         // If output is already spent, convert to BlockValidationError
-        if (error instanceof Error && error.message.includes('already been spent')) {
+        if (
+          error instanceof Error &&
+          error.message.includes("already been spent")
+        ) {
           throw new BlockValidationError(
             `Input references already spent output: ${input.txId}:${input.index}`
           );
@@ -77,7 +84,10 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
 
     // For each transaction: if it has inputs, the sum of input values must equal sum of output values
     // Transactions with no inputs are allowed (they create new coins, like the first block)
-    if (transaction.inputs.length > 0 && transactionInputValue !== transactionOutputValue) {
+    if (
+      transaction.inputs.length > 0 &&
+      transactionInputValue !== transactionOutputValue
+    ) {
       throw new BlockValidationError(
         `Input/output sum mismatch for transaction ${transaction.id}. Inputs: ${transactionInputValue}, Outputs: ${transactionOutputValue}`
       );
@@ -88,12 +98,12 @@ export async function validateBlock(pool: Pool, block: Block): Promise<void> {
   const transactionIds = block.transactions
     .map((tx) => tx.id)
     .sort() // Sort to ensure consistent ordering
-    .join('');
-  
+    .join("");
+
   const blockIdInput = `${block.height}${transactionIds}`;
-  const expectedBlockId = createHash('sha256')
+  const expectedBlockId = createHash("sha256")
     .update(blockIdInput)
-    .digest('hex');
+    .digest("hex");
 
   if (block.id !== expectedBlockId) {
     throw new BlockValidationError(
@@ -108,9 +118,9 @@ export async function processBlock(pool: Pool, block: Block): Promise<void> {
 
   // Start transaction for atomicity
   const client = await pool.connect();
-  
+
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     // Insert block
     await insertBlock(client, block.id, block.height);
@@ -120,12 +130,11 @@ export async function processBlock(pool: Pool, block: Block): Promise<void> {
       await processBlockTransaction(client, transaction, block.id);
     }
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
 }
-

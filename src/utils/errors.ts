@@ -22,25 +22,24 @@ export class ValidationError extends AppError {
 
 export class BlockValidationError extends ValidationError {
   constructor(message: string) {
-    super(message, 'BLOCK_VALIDATION_ERROR');
+    super(message, "BLOCK_VALIDATION_ERROR");
   }
 }
 
 export class RollbackError extends ValidationError {
   constructor(message: string) {
-    super(message, 'ROLLBACK_ERROR');
+    super(message, "ROLLBACK_ERROR");
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message: string = 'Resource not found') {
-    super(message, 404, 'NOT_FOUND');
+  constructor(message: string = "Resource not found") {
+    super(message, 404, "NOT_FOUND");
   }
 }
 
 export class InternalServerError extends AppError {
-  constructor(message: string = 'Internal server error') {
-    super(message, 500, 'INTERNAL_SERVER_ERROR');
+  constructor(message: string = "Internal server error") {
+    super(message, 500, "INTERNAL_SERVER_ERROR");
   }
 }
-

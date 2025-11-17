@@ -1,6 +1,6 @@
-import { Pool } from 'pg';
-import type { PoolClient } from 'pg';
-import type { Block, Transaction, Input, Output } from 'src/types/block.types';
+import { Pool } from "pg";
+import type { PoolClient } from "pg";
+import type { Block, Transaction, Input, Output } from "src/types/block.types";
 
 type DbClient = Pool | PoolClient;
 
@@ -16,19 +16,22 @@ export async function getOutputValue(
   txId: string,
   index: number
 ): Promise<number | null> {
-  const result = await pool.query(`
+  const result = await pool.query(
+    `
     SELECT value, spent FROM outputs
     WHERE transaction_id = $1 AND output_index = $2;
-  `, [txId, index]);
-  
+  `,
+    [txId, index]
+  );
+
   if (result.rows.length === 0) {
     return null;
   }
-  
+
   if (result.rows[0].spent) {
     throw new Error(`Output ${txId}:${index} has already been spent`);
   }
-  
+
   return Number(result.rows[0].value);
 }
 
@@ -37,11 +40,14 @@ export async function getOutputAddress(
   txId: string,
   index: number
 ): Promise<string | null> {
-  const result = await pool.query(`
+  const result = await pool.query(
+    `
     SELECT address FROM outputs
     WHERE transaction_id = $1 AND output_index = $2;
-  `, [txId, index]);
-  
+  `,
+    [txId, index]
+  );
+
   return result.rows[0]?.address ?? null;
 }
 
@@ -50,10 +56,13 @@ export async function insertBlock(
   blockId: string,
   height: number
 ): Promise<void> {
-  await pool.query(`
+  await pool.query(
+    `
     INSERT INTO blocks (id, height)
     VALUES ($1, $2);
-  `, [blockId, height]);
+  `,
+    [blockId, height]
+  );
 }
 
 export async function insertTransaction(
@@ -61,10 +70,13 @@ export async function insertTransaction(
   transactionId: string,
   blockId: string
 ): Promise<void> {
-  await pool.query(`
+  await pool.query(
+    `
     INSERT INTO transactions (id, block_id)
     VALUES ($1, $2);
-  `, [transactionId, blockId]);
+  `,
+    [transactionId, blockId]
+  );
 }
 
 export async function insertOutput(
@@ -74,11 +86,14 @@ export async function insertOutput(
   address: string,
   value: number
 ): Promise<void> {
-  await pool.query(`
+  await pool.query(
+    `
     INSERT INTO outputs (transaction_id, output_index, address, value, spent)
     VALUES ($1, $2, $3, $4, FALSE)
     ON CONFLICT (transaction_id, output_index) DO NOTHING;
-  `, [transactionId, outputIndex, address, value]);
+  `,
+    [transactionId, outputIndex, address, value]
+  );
 }
 
 export async function insertInput(
@@ -87,10 +102,13 @@ export async function insertInput(
   spentTransactionId: string,
   spentOutputIndex: number
 ): Promise<void> {
-  await pool.query(`
+  await pool.query(
+    `
     INSERT INTO inputs (transaction_id, spent_transaction_id, spent_output_index)
     VALUES ($1, $2, $3);
-  `, [transactionId, spentTransactionId, spentOutputIndex]);
+  `,
+    [transactionId, spentTransactionId, spentOutputIndex]
+  );
 }
 
 export async function markOutputAsSpent(
@@ -98,11 +116,14 @@ export async function markOutputAsSpent(
   transactionId: string,
   outputIndex: number
 ): Promise<void> {
-  await pool.query(`
+  await pool.query(
+    `
     UPDATE outputs
     SET spent = TRUE
     WHERE transaction_id = $1 AND output_index = $2;
-  `, [transactionId, outputIndex]);
+  `,
+    [transactionId, outputIndex]
+  );
 }
 
 export async function updateAddressBalance(
@@ -110,14 +131,17 @@ export async function updateAddressBalance(
   address: string,
   delta: number
 ): Promise<void> {
-  await pool.query(`
+  await pool.query(
+    `
     INSERT INTO address_balances (address, balance, updated_at)
     VALUES ($1, $2, NOW())
     ON CONFLICT (address) 
     DO UPDATE SET 
       balance = address_balances.balance + $2,
       updated_at = NOW();
-  `, [address, delta]);
+  `,
+    [address, delta]
+  );
 }
 
 /**
@@ -128,11 +152,14 @@ export async function getAddressBalance(
   pool: DbClient,
   address: string
 ): Promise<number> {
-  const result = await pool.query(`
+  const result = await pool.query(
+    `
     SELECT balance FROM address_balances
     WHERE address = $1;
-  `, [address]);
-  
+  `,
+    [address]
+  );
+
   return result.rows[0]?.balance ? Number(result.rows[0].balance) : 0;
 }
 
@@ -144,12 +171,15 @@ export async function calculateAddressBalance(
   pool: DbClient,
   address: string
 ): Promise<number> {
-  const result = await pool.query(`
+  const result = await pool.query(
+    `
     SELECT COALESCE(SUM(value), 0) as balance
     FROM outputs
     WHERE address = $1 AND spent = FALSE;
-  `, [address]);
-  
+  `,
+    [address]
+  );
+
   return Number(result.rows[0]?.balance || 0);
 }
 
@@ -188,7 +218,7 @@ export async function processBlockTransaction(
   for (let i = 0; i < transaction.outputs.length; i++) {
     const output = transaction.outputs[i];
     await insertOutput(pool, transaction.id, i, output.address, output.value);
-    
+
     // Increase balance for the address receiving the output
     await updateAddressBalance(pool, output.address, output.value);
   }
@@ -197,10 +227,10 @@ export async function processBlockTransaction(
 export async function clearAllBlocks(pool: DbClient): Promise<void> {
   // Delete all blocks (cascade will delete transactions, inputs, outputs)
   await pool.query(`DELETE FROM blocks;`);
-  
+
   // Reset all address balances
   await pool.query(`DELETE FROM address_balances;`);
-  
+
   // Reset all outputs to unspent (in case there are orphaned outputs)
   await pool.query(`UPDATE outputs SET spent = FALSE;`);
 }
@@ -213,10 +243,13 @@ export async function deleteBlocksAboveHeight(
   pool: DbClient,
   height: number
 ): Promise<void> {
-  await pool.query(`
+  await pool.query(
+    `
     DELETE FROM blocks
     WHERE height > $1;
-  `, [height]);
+  `,
+    [height]
+  );
 }
 
 /**
@@ -245,7 +278,7 @@ export async function resetSpentOutputs(pool: DbClient): Promise<void> {
 export async function recalculateAllBalances(pool: DbClient): Promise<void> {
   // Delete all existing balances
   await pool.query(`DELETE FROM address_balances;`);
-  
+
   // Recalculate balances from unspent outputs
   await pool.query(`
     INSERT INTO address_balances (address, balance, updated_at)
@@ -261,10 +294,9 @@ export async function recalculateAllBalances(pool: DbClient): Promise<void> {
       balance = EXCLUDED.balance,
       updated_at = NOW();
   `);
-  
+
   // Also insert 0 balance for addresses that have no unspent outputs
   // (to ensure they show up as 0, not missing)
   // Actually, we don't need to do this - if an address has no unspent outputs,
   // calculateAddressBalance will return 0 anyway
 }
-
