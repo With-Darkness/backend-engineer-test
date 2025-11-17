@@ -139,12 +139,6 @@ export async function getAddressBalance(
 /**
  * Calculate balance directly from UTXOs (unspent outputs)
  * This is the source of truth: balance = sum of all unspent outputs for an address
- * 
- * According to UTXO model:
- * - Each output means an address received value
- * - Each input means an output was spent
- * - Balance = sum of all outputs received minus sum of all outputs spent
- * - Which equals: sum of all unspent outputs (UTXOs)
  */
 export async function calculateAddressBalance(
   pool: DbClient,
@@ -209,5 +203,68 @@ export async function clearAllBlocks(pool: DbClient): Promise<void> {
   
   // Reset all outputs to unspent (in case there are orphaned outputs)
   await pool.query(`UPDATE outputs SET spent = FALSE;`);
+}
+
+/**
+ * Delete all blocks with height greater than the given height
+ * This will cascade delete transactions, inputs, and outputs
+ */
+export async function deleteBlocksAboveHeight(
+  pool: DbClient,
+  height: number
+): Promise<void> {
+  await pool.query(`
+    DELETE FROM blocks
+    WHERE height > $1;
+  `, [height]);
+}
+
+/**
+ * Reset spent flag for outputs that were referenced by deleted inputs
+ * When a transaction is deleted, its inputs are deleted, but the outputs
+ * they referenced should become unspent again
+ */
+export async function resetSpentOutputs(pool: DbClient): Promise<void> {
+  // Reset all outputs to unspent that are not referenced by any existing input
+  await pool.query(`
+    UPDATE outputs
+    SET spent = FALSE
+    WHERE spent = TRUE
+    AND NOT EXISTS (
+      SELECT 1 FROM inputs
+      WHERE inputs.spent_transaction_id = outputs.transaction_id
+      AND inputs.spent_output_index = outputs.output_index
+    );
+  `);
+}
+
+/**
+ * Recalculate all address balances from UTXOs
+ * This is used after rollback to ensure balances are accurate
+ */
+export async function recalculateAllBalances(pool: DbClient): Promise<void> {
+  // Delete all existing balances
+  await pool.query(`DELETE FROM address_balances;`);
+  
+  // Recalculate balances from unspent outputs
+  await pool.query(`
+    INSERT INTO address_balances (address, balance, updated_at)
+    SELECT 
+      address,
+      COALESCE(SUM(value), 0) as balance,
+      NOW() as updated_at
+    FROM outputs
+    WHERE spent = FALSE
+    GROUP BY address
+    ON CONFLICT (address) 
+    DO UPDATE SET 
+      balance = EXCLUDED.balance,
+      updated_at = NOW();
+  `);
+  
+  // Also insert 0 balance for addresses that have no unspent outputs
+  // (to ensure they show up as 0, not missing)
+  // Actually, we don't need to do this - if an address has no unspent outputs,
+  // calculateAddressBalance will return 0 anyway
 }
 
