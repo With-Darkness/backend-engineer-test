@@ -173,3 +173,14 @@ export async function processBlockTransaction(
   }
 }
 
+export async function clearAllBlocks(pool: DbClient): Promise<void> {
+  // Delete all blocks (cascade will delete transactions, inputs, outputs)
+  await pool.query(`DELETE FROM blocks;`);
+  
+  // Reset all address balances
+  await pool.query(`DELETE FROM address_balances;`);
+  
+  // Reset all outputs to unspent (in case there are orphaned outputs)
+  await pool.query(`UPDATE outputs SET spent = FALSE;`);
+}
+
