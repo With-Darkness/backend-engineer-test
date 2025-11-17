@@ -19,4 +19,3 @@ export interface Block {
   height: number;
   transactions: Array<Transaction>;
 }
-

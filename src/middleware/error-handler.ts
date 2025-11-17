@@ -2,9 +2,9 @@
  * Error handling middleware for Fastify
  */
 
-import type { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
-import { AppError, ValidationError } from 'src/utils/errors';
-import { sendError } from 'src/utils/response';
+import type { FastifyError, FastifyRequest, FastifyReply } from "fastify";
+import { AppError, ValidationError } from "src/utils/errors";
+import { sendError } from "src/utils/response";
 
 /**
  * Global error handler middleware
@@ -15,7 +15,7 @@ export async function errorHandler(
   reply: FastifyReply
 ): Promise<void> {
   // Log the error
-  request.log.error({ err: error }, 'Request error');
+  request.log.error({ err: error }, "Request error");
 
   // Handle known application errors
   if (error instanceof AppError) {
@@ -28,8 +28,8 @@ export async function errorHandler(
     sendError(
       reply,
       new ValidationError(
-        error.message || 'Validation error',
-        'VALIDATION_ERROR'
+        error.message || "Validation error",
+        "VALIDATION_ERROR"
       )
     );
     return;
@@ -53,4 +53,3 @@ export function asyncHandler<T extends FastifyRequest = FastifyRequest>(
     }
   };
 }
-

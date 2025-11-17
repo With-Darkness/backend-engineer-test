@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool } from "pg";
 
 let pool: Pool | null = null;
 
@@ -6,10 +6,10 @@ export function getPool(): Pool {
   if (!pool) {
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
-      throw new Error('DATABASE_URL is required');
+      throw new Error("DATABASE_URL is required");
     }
     pool = new Pool({
-      connectionString: databaseUrl
+      connectionString: databaseUrl,
     });
   }
   return pool;
@@ -17,7 +17,7 @@ export function getPool(): Pool {
 
 export async function initializeDatabase() {
   const dbPool = getPool();
-  
+
   // Create tables for blockchain indexer
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS blocks (
@@ -95,4 +95,3 @@ export async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_inputs_spent_output ON inputs (spent_transaction_id, spent_output_index);
   `);
 }
-

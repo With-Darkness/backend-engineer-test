@@ -2,8 +2,8 @@
  * Response helper utilities
  */
 
-import type { FastifyReply } from 'fastify';
-import { AppError } from 'src/utils/errors';
+import type { FastifyReply } from "fastify";
+import { AppError } from "src/utils/errors";
 
 /**
  * Safely send a response, checking if headers are already sent
@@ -41,7 +41,7 @@ export function sendSuccess(
 export function sendError(
   reply: FastifyReply,
   error: AppError | Error,
-  defaultMessage: string = 'Internal server error'
+  defaultMessage: string = "Internal server error"
 ): void {
   if (reply.sent) {
     return;
@@ -51,12 +51,12 @@ export function sendError(
     if (error instanceof AppError) {
       sendResponse(reply, error.statusCode, {
         error: error.message,
-        code: error.code
+        code: error.code,
       });
     } else {
       sendResponse(reply, 500, {
         error: defaultMessage,
-        code: 'INTERNAL_SERVER_ERROR'
+        code: "INTERNAL_SERVER_ERROR",
       });
     }
   } catch (sendError) {
@@ -74,7 +74,6 @@ export function sendValidationError(
 ): void {
   sendResponse(reply, 400, {
     error: message,
-    code: code || 'VALIDATION_ERROR'
+    code: code || "VALIDATION_ERROR",
   });
 }
-

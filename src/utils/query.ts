@@ -2,9 +2,9 @@
  * Query parameter parsing utilities
  */
 
-import type { FastifyRequest } from 'fastify';
-import { parse } from 'querystring';
-import { ValidationError } from 'src/utils/errors';
+import type { FastifyRequest } from "fastify";
+import { parse } from "querystring";
+import { ValidationError } from "src/utils/errors";
 
 /**
  * Parse query parameter from request URL
@@ -14,14 +14,13 @@ export function getQueryParam(
   request: FastifyRequest,
   paramName: string
 ): string | null {
-  // Try Fastify's query object first
   const query = request.query as any;
   if (query && query[paramName]) {
     return String(query[paramName]);
   }
 
   // Fallback: parse from URL string
-  const urlParts = request.url.split('?');
+  const urlParts = request.url.split("?");
   if (urlParts.length > 1) {
     const queryString = urlParts[1];
     const queryParams = parse(queryString);
@@ -41,7 +40,7 @@ export function getRequiredQueryParam(
   errorMessage?: string
 ): string {
   const value = getQueryParam(request, paramName);
-  if (!value || value === '') {
+  if (!value || value === "") {
     throw new ValidationError(
       errorMessage || `${paramName} query parameter is required`
     );
@@ -82,4 +81,3 @@ export function getRequiredIntQueryParam(
   }
   return value;
 }
-

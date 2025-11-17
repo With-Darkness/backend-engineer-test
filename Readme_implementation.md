@@ -72,3 +72,102 @@ Rollback the blockchain indexer to a specific height.
 - ✅ Absolute imports (src/ prefix)
 - ✅ Type-safe with TypeScript
 - ✅ Clean architecture (layered structure)
+
+## Running the Project
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- Bun runtime (or Node.js)
+- PostgreSQL database (via Docker or local)
+
+### Setup Environment
+
+Create a `.env` file in the project root:
+
+```env
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
+POSTGRES_DB=mydatabase
+DB_PORT=5432
+API_PORT=3000
+DATABASE_URL=postgres://myuser:mypassword@localhost:5432/mydatabase
+```
+
+### Start with Docker
+
+```bash
+# Start database and API services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f api
+
+# Stop services
+docker-compose down
+```
+
+### Start Manually
+
+```bash
+# 1. Start database (if using Docker for DB only)
+docker-compose up -d db
+
+# 2. Start the API
+bun src/index.ts
+# or
+npm start
+```
+
+The API will be available at `http://localhost:3000`
+
+## Running Tests
+
+### Run All Tests
+
+```bash
+bun test
+```
+
+This will run all test files:
+
+- `spec/blocks.spec.ts` (17 tests)
+- `spec/balance.spec.ts` (10 tests)
+- `spec/rollback.spec.ts` (14 tests)
+
+**Total: 41 tests**
+
+### Run Individual Test Files
+
+```bash
+# Run only block tests
+bun test spec/blocks.spec.ts
+
+# Run only balance tests
+bun test spec/balance.spec.ts
+
+# Run only rollback tests
+bun test spec/rollback.spec.ts
+```
+
+### Run Specific Test
+
+```bash
+# Run a specific test by name
+bun test --test-name-pattern "POST /blocks - Block 1"
+```
+
+### Test Requirements
+
+- Database must be running (via Docker or local PostgreSQL)
+- `DATABASE_URL` must be set in `.env` or environment
+- Port 3000 must be available (tests start a server on this port)
+
+### Test Output
+
+Tests will show:
+
+- ✅ Passing tests
+- ❌ Failing tests with error details
+- Test execution time
+- Summary of passed/failed tests
