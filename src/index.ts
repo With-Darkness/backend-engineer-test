@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { Pool } from 'pg';
 import { randomUUID } from 'crypto';
+import { blockRoutes } from './api/routes/block.routes';
 
 const fastify = Fastify({ logger: true });
 
@@ -54,6 +55,10 @@ async function bootstrap() {
 
 try {
   await bootstrap();
+  
+  // Register block routes
+  await fastify.register(blockRoutes);
+  
   await fastify.listen({
     port: 3000,
     host: '0.0.0.0'
