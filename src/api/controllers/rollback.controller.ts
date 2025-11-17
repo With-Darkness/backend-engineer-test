@@ -1,16 +1,34 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
+import { parse } from 'querystring';
 import { getPool } from '../../db/index';
 import { rollbackToHeight, RollbackError } from '../../services/rollback.service';
 
 export async function rollback(
-  request: FastifyRequest<{ Querystring: { height?: string } }>,
+  request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
   // Prevent errors from propagating to Fastify's error handler
   try {
-    const heightParam = request.query.height;
+    // Parse query string from URL
+    let heightParam: string | null = null;
+
+    // Extract query string from URL
+    const urlParts = request.url.split('?');
+    if (urlParts.length > 1) {
+      const queryString = urlParts[1];
+      const queryParams = parse(queryString);
+      heightParam = queryParams.height as string | null;
+    }
     
+    // Fallback: try Fastify's query object
     if (!heightParam) {
+      const query = request.query as any;
+      if (query && query.height) {
+        heightParam = String(query.height);
+      }
+    }
+    
+    if (!heightParam || heightParam === '') {
       if (!reply.sent) {
         try {
           reply.code(400).send({ error: 'Height query parameter is required' });
